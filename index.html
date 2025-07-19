@@ -5,61 +5,209 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notion 3D Viewer</title>
     <style>
-        body { 
-            margin: 0;
-            font-family: monospace, sans-serif;
-            font-size: small;
+        :root {
+            --bg-color: #f0f0f0;
+            --menu-bg-color: rgba(255, 255, 255, 0.8);
+            --text-color: #333;
+            --border-color: #333;
+            --checkbox-bg: #fff;
+            --selected-border-color: #fff;
+            --selected-shadow-color: #333;
         }
-        canvas { display: block; }
+        body.dark-mode {
+            --bg-color: #2c2c2c;
+            --menu-bg-color: rgba(44, 44, 44, 0.8);
+            --text-color: #f0f0f0;
+            --border-color: #f0f0f0;
+            --checkbox-bg: #555;
+            --selected-border-color: #2c2c2c;
+            --selected-shadow-color: #f0f0f0;
+        }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            transition: background-color 0.3s ease;
+        }
+        canvas {
+            display: block;
+        }
         #menu {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background: #202020;
-            color: #888;
-            padding: 10px;
+            top: 16px;
+            left: 16px;
+            background: var(--menu-bg-color);
+            backdrop-filter: blur(10px);
             border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            color: var(--text-color);
         }
         #menu-toggle {
             cursor: pointer;
-            padding: 5px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+        #menu-toggle::after {
+            content: '▶';
+            display: inline-block;
+            font-size: 0.8em;
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+        }
+        #menu.open #menu-toggle::after {
+            transform: rotate(90deg);
         }
         #menu-content {
-            display: none;
-            margin-top: 10px;
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease, padding 0.3s ease;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #menu.open #menu-content {
+            max-height: 300px; /* Adjust as needed */
+            opacity: 1;
+            visibility: visible;
+            padding: 0 16px 16px 16px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         input[type="checkbox"] {
-            accent-color: #000;
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: var(--checkbox-bg);
+            margin: 0;
+            font: inherit;
+            color: var(--border-color);
+            width: 1.15em;
+            height: 1.15em;
+            border: 0.15em solid currentColor;
+            border-radius: 0.3em;
+            transform: translateY(-0.075em);
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+        }
+        input[type="checkbox"]::before {
+            content: "";
+            width: 0.65em;
+            height: 0.65em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em var(--text-color);
+            transform-origin: bottom left;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+        input[type="checkbox"]:checked::before {
+            transform: scale(1);
         }
         #color-picker {
             display: flex;
-            margin-top: 10px;
+            gap: 8px;
+            align-items: center;
         }
         .color-box {
-            width: 16px;
-            height: 16px;
-            margin-right: 5px;
+            width: 24px;
+            height: 24px;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 6px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .color-box:hover {
+            transform: scale(1.1);
+        }
+        .color-box.selected {
+            border-color: var(--selected-border-color);
+            box-shadow: 0 0 0 2px var(--selected-shadow-color);
+        }
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 22px;
+            position: relative;
+            width: 40px;
+        }
+        .theme-switch input {
+            display:none;
+        }
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+        }
+        .slider:before {
+            background-color: #fff;
+            bottom: 3px;
+            content: "";
+            height: 16px;
+            left: 3px;
+            position: absolute;
+            transition: .4s;
+            width: 16px;
+        }
+        input:checked + .slider {
+            background-color: #555;
+        }
+        input:checked + .slider:before {
+            transform: translateX(18px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
         }
     </style>
 </head>
 <body>
     <div id="menu">
-        <div id="menu-toggle">Menu</div>
-        <div id="menu-content" style="display: none;">
-            <div>
-                <input type="checkbox" id="show-vertices"> <label for="show-vertices">Show Vertices</label>
+        <div id="menu-toggle">Controls</div>
+        <div id="menu-content">
+            <div class="menu-item">
+                <input type="checkbox" id="show-surface" checked>
+                <label for="show-surface">Show Surface</label>
             </div>
-            <div id="color-picker">
-                <div class="color-box" data-color="0x000000" style="background-color: #000000"></div>
-                <div class="color-box" data-color="0xff0000" style="background-color: #ff0000"></div>
-                <div class="color-box" data-color="0x00ff00" style="background-color: #00ff00"></div>
-                <div class="color-box" data-color="0x0000ff" style="background-color: #0000ff"></div>
+            <div class="menu-item">
+                <input type="checkbox" id="show-vertices">
+                <label for="show-vertices">Show Wireframe</label>
             </div>
-            <div>
-                <input type="checkbox" id="show-surface" checked> <label for="show-surface">Show Surface</label>
+            <div class="menu-item">
+                <label>Color:</label>
+                <div id="color-picker">
+                    <div class="color-box selected" data-color="0x000000" style="background-color: #000000"></div>
+                    <div class="color-box" data-color="0xff0000" style="background-color: #ff0000"></div>
+                    <div class="color-box" data-color="0x00ff00" style="background-color: #00ff00"></div>
+                    <div class="color-box" data-color="0x0000ff" style="background-color: #0000ff"></div>
+                </div>
+            </div>
+            <div class="menu-item">
+                <label for="theme-switch">Theme:</label>
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch">
+                        <input type="checkbox" id="theme-switch">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
             </div>
         </div>
     </div>
@@ -70,16 +218,17 @@
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
 
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(1, 1, 1).normalize();
         scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
 
         const wireframeHelpers = [];
         const originalMaterials = new Map();
@@ -93,13 +242,13 @@
                 scene.add(gltf.scene);
                 const box = new THREE.Box3().setFromObject(gltf.scene);
                 const center = box.getCenter(new THREE.Vector3());
-                gltf.scene.position.sub(center); // center the model
+                gltf.scene.position.sub(center);
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const fov = camera.fov * (Math.PI / 180);
                 let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-                cameraZ *= 1.5; // zoom out a bit
-                camera.position.z = cameraZ;
+                cameraZ *= 1.5;
+                camera.position.set(0, 0, cameraZ);
                 controls.update();
 
                 gltf.scene.traverse((child) => {
@@ -112,18 +261,16 @@
                         wireframeHelpers.push(wireframe);
                     }
                 });
-
             }, undefined, (error) => {
-                console.error(error);
+                console.error('An error happened', error);
             });
         } else {
             const geometry = new THREE.BoxGeometry();
-            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.5 });
             const cube = new THREE.Mesh(geometry, material);
             scene.add(cube);
             camera.position.z = 5;
         }
-
 
         function animate() {
             requestAnimationFrame(animate);
@@ -138,10 +285,10 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }, false);
 
+        const menu = document.getElementById('menu');
         const menuToggle = document.getElementById('menu-toggle');
-        const menuContent = document.getElementById('menu-content');
         menuToggle.addEventListener('click', () => {
-            menuContent.style.display = menuContent.style.display === 'none' ? 'block' : 'none';
+            menu.classList.toggle('open');
         });
 
         const showVerticesCheckbox = document.getElementById('show-vertices');
@@ -156,22 +303,28 @@
         showSurfaceCheckbox.addEventListener('change', (event) => {
             const isVisible = event.target.checked;
             for (const [mesh, material] of originalMaterials.entries()) {
-                if (isVisible) {
-                    mesh.material = material;
-                } else {
-                    mesh.material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
-                }
+                mesh.material.visible = isVisible;
             }
         });
 
         const colorBoxes = document.querySelectorAll('.color-box');
         colorBoxes.forEach(box => {
             box.addEventListener('click', (event) => {
-                const color = parseInt(event.target.dataset.color, 16);
+                colorBoxes.forEach(b => b.classList.remove('selected'));
+                const selectedBox = event.currentTarget;
+                selectedBox.classList.add('selected');
+                const color = parseInt(selectedBox.dataset.color, 16);
                 for (const helper of wireframeHelpers) {
                     helper.material.color.setHex(color);
                 }
             });
+        });
+
+        const themeSwitch = document.getElementById('theme-switch');
+        themeSwitch.addEventListener('change', function() {
+            document.body.classList.toggle('dark-mode', this.checked);
+            const clearColor = this.checked ? 0x2c2c2c : 0xf0f0f0;
+            renderer.setClearColor(clearColor, 1);
         });
 
     </script>
