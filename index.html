@@ -7,18 +7,20 @@
     <style>
         :root {
             --bg-color: #f0f0f0;
-            --menu-bg-color: rgba(255, 255, 255, 0.8);
+            --menu-bg-color: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
             --text-color: #333;
-            --border-color: #333;
+            --border-color: rgba(255, 255, 255, 0.5);
+            --shadow-color: rgba(0, 0, 0, 0.1);
             --checkbox-bg: #fff;
             --selected-border-color: #fff;
             --selected-shadow-color: #333;
         }
         body.dark-mode {
             --bg-color: #000000;
-            --menu-bg-color: rgba(44, 44, 44, 0.8);
+            --menu-bg-color: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
             --text-color: #999;
-            --border-color: #f0f0f0;
+            --border-color: rgba(255, 255, 255, 0.2);
+            --shadow-color: rgba(0, 0, 0, 0.2);
             --checkbox-bg: #555;
             --selected-border-color: #2c2c2c;
             --selected-shadow-color: #f0f0f0;
@@ -32,17 +34,21 @@
         canvas {
             display: block;
         }
+        .glass-ui {
+            background: var(--menu-bg-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* For Safari */
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
         #menu {
             position: absolute;
             top: 16px;
             left: 16px;
-            background: var(--menu-bg-color);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
             overflow: hidden;
-            color: var(--text-color);
         }
         #menu-toggle {
             cursor: pointer;
@@ -169,7 +175,7 @@
     <div id="title"></div>
     <div id="loading-indicator"></div>
     <div id="error-message"></div>
-    <div id="upload-ui" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--menu-bg-color); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); text-align: center; color: var(--text-color); backdrop-filter: blur(10px);">
+    <div id="upload-ui" class="glass-ui" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; text-align: center;">
         <h2 style="margin-top: 0; font-weight: 250;">Load 3D Model</h2>
         <p style="font-size: 14px; font-weight: 250;">Select a GLB/GLTF file or paste a URL.</p>
         <input type="file" id="file-input" accept=".glb,.gltf" style="margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">
@@ -181,7 +187,7 @@
         <svg class="sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         <svg class="moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
     </div>
-    <div id="menu">
+    <div id="menu" class="glass-ui">
         <div id="menu-toggle">Controls</div>
         <div id="menu-content">
             <div class="menu-item">
