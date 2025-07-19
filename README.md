@@ -50,6 +50,16 @@ To view a 3D model and configure its display, you can append query parameters to
     *   **Default:** `dark`
     *   **Example:** `&theme=light` (to enable light mode)
 
+*   `lighting`: Toggles the visibility of the scene's lighting.
+    *   **Allowed values:** `true`, `false`
+    *   **Default:** `true`
+    *   **Example:** `&lighting=false` (to hide lighting)
+
+*   `environment`: Toggles the visibility of the environment map (background and reflections).
+    *   **Allowed values:** `true`, `false`
+    *   **Default:** `false`
+    *   **Example:** `&environment=true` (to show environment)
+
 *   `autorotate`: Toggles automatic rotation of the model.
     *   **Allowed values:** `true`, `false`
     *   **Default:** `false`
