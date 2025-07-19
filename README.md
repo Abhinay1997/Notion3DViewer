@@ -65,4 +65,4 @@ Sample duck.glb credits to KhronosGroup! Thanks team!
 ## Embedding in Notion
 
 To embed the viewer in Notion, simply paste the constructed URL (including your `modelUrl` and any other desired parameters) into a Notion page and select "Embed". Here's how it looks on Notion:
-![notion](https://github.com/Abhinay1997/Notion3DViewer/blob/main/assets/notion_iframe.png?raw=true)
+![notion](https://github.com/Abhinay1997/Notion3DViewer/blob/main/assets/lighting_added.png?raw=true)
