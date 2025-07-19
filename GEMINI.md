@@ -8,7 +8,8 @@ This project is a simple, embeddable 3D model viewer designed for use within Not
 -   **Toggleable Visuals:** Options to show/hide the model's surface and a wireframe overlay.
 -   **Customizable Wireframe Color:** Users can select the wireframe color from predefined options.
 -   **Theme Switching:** Supports light and dark mode for the viewer and its controls.
--   **URL-driven Configuration:** All menu options (surface, wireframe, color, theme) can be pre-configured via URL query parameters for seamless embedding and sharing.
+-   **URL-driven Configuration:** All menu options (surface, wireframe, color, theme, auto-rotate) can be pre-configured via URL query parameters for seamless embedding and sharing.
+-   **Auto-Rotate:** Automatically rotate the model for a dynamic view.
 
 **Technical Stack:**
 -   HTML, CSS, JavaScript

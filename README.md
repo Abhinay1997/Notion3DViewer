@@ -11,6 +11,7 @@ This is a simple 3D viewer that can be embedded in Notion as an iframe. It uses 
 - **Customizable Display**: Toggle the model's surface and wireframe visibility.
 - **Customizable Wireframe**: Change the color of the wireframe.
 - **Light/Dark Mode**: Switch between themes for the viewer and its controls.
+- **Auto-Rotate**: Automatically rotate the model for a dynamic view.
 - **Embeddable**: Designed to be easily embedded in Notion or any site that supports iframes.
 
 ## How to use
@@ -49,9 +50,14 @@ To view a 3D model and configure its display, you can append query parameters to
     *   **Default:** `dark`
     *   **Example:** `&theme=light` (to enable light mode)
 
+*   `autorotate`: Toggles automatic rotation of the model.
+    *   **Allowed values:** `true`, `false`
+    *   **Default:** `false`
+    *   **Example:** `&autorotate=true` (to enable auto-rotation)
+
 **Full URL Example:**
 
-[live demo](https://abhinay1997.github.io/Notion3DViewer/?modelUrl=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/refs/heads/main/2.0/Duck/glTF-Binary/Duck.glb&theme=dark)
+[live demo](https://abhinay1997.github.io/Notion3DViewer/?modelUrl=https://raw.GithubUserContent.com/DRx3D/glTF-Sample-Models/main/Models/GlassHurricaneCandleHolder/glTF-Binary/GlassHurricaneCandleHolder.glb&theme=dark&lighting=true&environment=true&autorotate=true)
 
 ![full screen](https://github.com/Abhinay1997/Notion3DViewer/blob/main/assets/full.png?raw=true)
 Sample duck.glb credits to KhronosGroup! Thanks team!
