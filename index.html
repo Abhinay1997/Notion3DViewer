@@ -80,7 +80,7 @@
             gap: 12px;
         }
         #menu.open #menu-content {
-            max-height: 300px; /* Adjust as needed */
+            max-height: 400px; /* Adjust as needed */
             opacity: 1;
             visibility: visible;
             padding: 0 16px 16px 16px;
@@ -195,8 +195,16 @@
                 <label for="show-surface">Show Surface</label>
             </div>
             <div class="menu-item">
-                <input type="checkbox" id="show-vertices">
-                <label for="show-vertices">Show Wireframe</label>
+                <input type="checkbox" id="show-wireframe">
+                <label for="show-wireframe">Show Wireframe</label>
+            </div>
+            <div class="menu-item">
+                <input type="checkbox" id="show-lighting" checked>
+                <label for="show-lighting">Lighting</label>
+            </div>
+            <div class="menu-item">
+                <input type="checkbox" id="show-environment" checked>
+                <label for="show-environment">Environment</label>
             </div>
             <div class="menu-item">
                 <label>Color:</label>
@@ -210,24 +218,48 @@
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+            "three/examples/jsm/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js",
+            "three/examples/jsm/controls/OrbitControls.js": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js",
+            "three/examples/jsm/loaders/RGBELoader.js": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/RGBELoader.js"
+        }
+    }
+    </script>
     <script type="module">
-        import * as THREE from 'https://cdn.skypack.dev/three@0.132.2';
-        import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/loaders/GLTFLoader.js';
-        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/controls/OrbitControls.js';
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+        import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1;
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(1, 1, 1).normalize();
-        scene.add(light);
+        const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+        directionalLight.position.set(1, 1, 1).normalize();
+        scene.add(directionalLight);
+
+        let environmentTexture = null;
+        new RGBELoader()
+            .load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/royal_esplanade_1k.hdr', (texture) => {
+                environmentTexture = texture;
+                environmentTexture.mapping = THREE.EquirectangularReflectionMapping;
+                applyQueryParams(); // Re-apply params after env map loads
+            });
 
         const wireframeHelpers = [];
         const originalMaterials = new Map();
@@ -250,67 +282,90 @@
             document.getElementById('menu').style.display = 'block';
 
             if (file && file.name.endsWith('.zip')) {
+                console.log('Processing ZIP file...');
                 const zip = new JSZip();
-                zip.loadAsync(file).then(zip => {
+                zip.loadAsync(file).then(zipFiles => {
+                    console.log('ZIP file loaded successfully.');
                     const fileMap = new Map();
+                    const objectURLs = [];
                     let modelFile = null;
                     let modelBasePath = '';
 
-                    for (const filename in zip.files) {
-                        if (filename.toLowerCase().endsWith('.gltf') || filename.toLowerCase().endsWith('.glb')) {
+                    const filePromises = [];
+                    console.log('Iterating through files in ZIP:');
+                    for (const filename in zipFiles.files) {
+                        if (filename.startsWith('__MACOSX/')) {
+                            console.log('- Skipping __MACOSX file:', filename);
+                            continue;
+                        };
+
+                        const zipEntry = zipFiles.files[filename];
+                        if (zipEntry.dir) {
+                            console.log('- Skipping directory:', filename);
+                            continue;
+                        }
+                        
+                        console.log('  - Processing file:', filename);
+
+                        if (!modelFile && (filename.toLowerCase().endsWith('.gltf') || filename.toLowerCase().endsWith('.glb'))) {
                             modelFile = filename;
                             const pathParts = filename.split('/');
                             pathParts.pop();
                             modelBasePath = pathParts.length > 0 ? pathParts.join('/') + '/' : '';
-                            break;
+                            console.log(`    > Model file found: ${modelFile}`);
+                            console.log(`    > Model base path set to: "${modelBasePath}"`);
                         }
-                    }
 
-                    if (!modelFile) {
-                        console.error("No GLISCO model file found in the zip.");
-                        document.getElementById('error-message').textContent = 'No GLTF/GLB file found in the zip archive.';
-                        document.getElementById('error-message').style.display = 'block';
-                        document.getElementById('upload-ui').style.display = 'block';
-                        document.getElementById('menu').style.display = 'none';
-                        return;
-                    }
-                    
-                    const promises = [];
-                    for (const filename in zip.files) {
-                        const file = zip.files[filename];
-                        if (file.dir || filename.startsWith('__MACOSX/')) continue;
-
-                        promises.push(file.async('blob').then(blob => {
-                            fileMap.set(filename, URL.createObjectURL(blob));
+                        filePromises.push(zipEntry.async('blob').then(blob => {
+                            const url = URL.createObjectURL(blob);
+                            console.log(`    > Created blob URL for ${filename}: ${url}`);
+                            fileMap.set(filename, url);
+                            objectURLs.push(url);
                         }));
                     }
 
-                    Promise.all(promises).then(() => {
-                        window.objectURLs = Array.from(fileMap.values());
+                    Promise.all(filePromises).then(() => {
+                        console.log('All file blobs created and mapped.');
+                        if (!modelFile) {
+                            console.error("No GLTF/GLB model file found in the zip.");
+                            document.getElementById('error-message').textContent = 'No GLTF/GLB file found in the zip archive.';
+                            document.getElementById('error-message').style.display = 'block';
+                            document.getElementById('upload-ui').style.display = 'block';
+                            document.getElementById('menu').style.display = 'none';
+                            return;
+                        }
+
+                        window.objectURLs = objectURLs;
+                        console.log('Final file map:', new Map(fileMap));
 
                         loadingManager.setURLModifier(path => {
-                            console.log('Requested path:', path);
-                            console.log('Available files:', Array.from(fileMap.keys()));
-                            
-                            if (path.startsWith('data:') || path.startsWith('blob:')) {
+                            console.log(`--- URL Modifier ---`);
+                            console.log(`Original path requested by loader: "${path}"`);
+
+                            if (path.startsWith('blob:')) {
+                                console.log(`Path is a blob, returning as is.`);
+                                console.log(`--------------------`);
                                 return path;
                             }
-                            
-                            const decodedPath = decodeURIComponent(path);
-                            const resolvedPath = modelBasePath + decodedPath;
-                            const filename = decodedPath.split('/').pop();
-                            
-                            const url = (
-                                fileMap.get(resolvedPath) ||
-                                fileMap.get(decodedPath) ||
-                                fileMap.get(filename) ||
-                                path
-                            );
-                            console.log('Resolved to:', url);
-                            return url;
+
+                            const requestedFilename = path.split('/').pop().split('\\').pop();
+                            console.log(`Requested filename: "${requestedFilename}"`);
+
+                            for (const [zipPath, blobUrl] of fileMap.entries()) {
+                                if (zipPath.endsWith(requestedFilename)) {
+                                    console.log(`Found matching file in zip: "${zipPath}". Returning its blob URL: ${blobUrl}`);
+                                    console.log(`--------------------`);
+                                    return blobUrl;
+                                }
+                            }
+
+                            console.log(`No matching file found for "${requestedFilename}". Returning original path.`);
+                            console.log(`--------------------`);
+                            return path;
                         });
 
                         const modelUrl = fileMap.get(modelFile);
+                        console.log(`Loading model from URL: ${modelUrl}`);
                         loadGLTF(modelUrl);
                     });
                 });
@@ -346,7 +401,7 @@
                 });
                 applyQueryParams();
             }, undefined, (error) => {
-                console.error('An error happened', error);
+                console.error('An error happened during GLTF loading:', error);
                 const errorMessage = document.getElementById('error-message');
                 errorMessage.textContent = 'Failed to load model. Check console for details.';
                 errorMessage.style.display = 'block';
@@ -369,11 +424,18 @@
         document.getElementById('file-input').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    loadModel(e.target.result, file);
-                };
-                reader.readAsDataURL(file);
+                console.log('File selected:', file.name);
+                if (file.name.endsWith('.zip')) {
+                    console.log('ZIP file detected, calling loadModel directly.');
+                    loadModel(null, file);
+                } else {
+                    console.log('Non-ZIP file detected, using FileReader.');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        loadModel(e.target.result, file);
+                    };
+                    reader.readAsDataURL(file);
+                }
             }
         });
 
@@ -415,13 +477,15 @@
         window.addEventListener('mousedown', closeMenu);
         window.addEventListener('touchstart', closeMenu);
 
-        const showVerticesCheckbox = document.getElementById('show-vertices');
-        showVerticesCheckbox.addEventListener('change', (event) => {
+        const showWireframeCheckbox = document.getElementById('show-wireframe');
+        showWireframeCheckbox.addEventListener('change', (event) => {
             const isVisible = event.target.checked;
             for (const helper of wireframeHelpers) {
                 helper.visible = isVisible;
             }
         });
+
+        
 
         const showSurfaceCheckbox = document.getElementById('show-surface');
         showSurfaceCheckbox.addEventListener('change', (event) => {
@@ -429,6 +493,13 @@
             for (const [mesh, material] of originalMaterials.entries()) {
                 mesh.material.visible = isVisible;
             }
+        });
+
+        const showEnvironmentCheckbox = document.getElementById('show-environment');
+        showEnvironmentCheckbox.addEventListener('change', (event) => {
+            const show = event.target.checked;
+            scene.background = show ? environmentTexture : null;
+            scene.environment = show ? environmentTexture : null;
         });
 
         const colorBoxes = document.querySelectorAll('.color-box');
@@ -447,8 +518,6 @@
         const themeToggle = document.getElementById('theme-toggle');
         function setTheme(isDark) {
             document.body.classList.toggle('dark-mode', isDark);
-            const clearColor = isDark ? 0x000000 : 0xf0f0f0;
-            renderer.setClearColor(clearColor, 1);
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
         }
 
@@ -466,8 +535,20 @@
 
             const wireframeParam = urlParams.get('wireframe');
             if (wireframeParam !== null) {
-                showVerticesCheckbox.checked = wireframeParam === 'true';
-                showVerticesCheckbox.dispatchEvent(new Event('change'));
+                showWireframeCheckbox.checked = wireframeParam === 'true';
+                showWireframeCheckbox.dispatchEvent(new Event('change'));
+            }
+
+            const lightingParam = urlParams.get('lighting');
+            if (lightingParam !== null) {
+                showLightingCheckbox.checked = lightingParam === 'true';
+                showLightingCheckbox.dispatchEvent(new Event('change'));
+            }
+
+            const environmentParam = urlParams.get('environment');
+            if (environmentParam !== null) {
+                showEnvironmentCheckbox.checked = environmentParam === 'true';
+                showEnvironmentCheckbox.dispatchEvent(new Event('change'));
             }
 
             const colorParam = urlParams.get('color');
