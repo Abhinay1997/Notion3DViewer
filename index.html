@@ -329,6 +329,76 @@
             renderer.setClearColor(clearColor, 1);
         });
 
+        function applyQueryParams() {
+            const surfaceParam = urlParams.get('surface');
+            if (surfaceParam !== null) {
+                showSurfaceCheckbox.checked = surfaceParam === 'true';
+                showSurfaceCheckbox.dispatchEvent(new Event('change'));
+            }
+
+            const wireframeParam = urlParams.get('wireframe');
+            if (wireframeParam !== null) {
+                showVerticesCheckbox.checked = wireframeParam === 'true';
+                showVerticesCheckbox.dispatchEvent(new Event('change'));
+            }
+
+            const colorParam = urlParams.get('color');
+            if (colorParam) {
+                const color = parseInt(colorParam, 16);
+                const colorBox = document.querySelector(`.color-box[data-color="0x${colorParam}"]`);
+                if (colorBox) {
+                    colorBoxes.forEach(b => b.classList.remove('selected'));
+                    colorBox.classList.add('selected');
+                    for (const helper of wireframeHelpers) {
+                        helper.material.color.setHex(color);
+                    }
+                }
+            }
+
+            const themeParam = urlParams.get('theme');
+            if (themeParam) {
+                themeSwitch.checked = themeParam === 'dark';
+                themeSwitch.dispatchEvent(new Event('change'));
+            }
+        }
+
+        if (modelUrl) {
+            loader.load(modelUrl, (gltf) => {
+                scene.add(gltf.scene);
+                const box = new THREE.Box3().setFromObject(gltf.scene);
+                const center = box.getCenter(new THREE.Vector3());
+                gltf.scene.position.sub(center);
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const fov = camera.fov * (Math.PI / 180);
+                let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+                cameraZ *= 1.5;
+                camera.position.set(0, 0, cameraZ);
+                controls.update();
+
+                gltf.scene.traverse((child) => {
+                    if (child.isMesh) {
+                        originalMaterials.set(child, child.material);
+                        const edges = new THREE.EdgesGeometry(child.geometry);
+                        const wireframe = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000 }));
+                        wireframe.visible = false;
+                        child.add(wireframe);
+                        wireframeHelpers.push(wireframe);
+                    }
+                });
+                applyQueryParams();
+            }, undefined, (error) => {
+                console.error('An error happened', error);
+            });
+        } else {
+            const geometry = new THREE.BoxGeometry();
+            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.5 });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            camera.position.z = 5;
+            applyQueryParams();
+        }
+
     </script>
 </body>
 </html>
