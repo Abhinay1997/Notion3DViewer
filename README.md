@@ -1,10 +1,21 @@
 # Notion 3D Viewer
 
-This is a simple 3D viewer that can be embedded in Notion as an iframe. It uses three.js to render the 3D model.
+This is a simple 3D viewer that can be embedded in Notion as an iframe. It uses `three.js` to render 3D models.
+
+## Features
+
+- **Load Models via URL**: Pass a public URL to a `.glb` or `.gltf` file.
+- **Upload Local Models**: Use the UI to load `.glb`, `.gltf`, or `.zip` files from your computer.
+- **ZIP File Support (Experimental)**: Upload a `.zip` file containing your model (`.gltf`/`.glb`) and its textures. The viewer will automatically handle the file hierarchy.
+- **Interactive Controls**: Orbit and inspect the model.
+- **Customizable Display**: Toggle the model's surface and wireframe visibility.
+- **Customizable Wireframe**: Change the color of the wireframe.
+- **Light/Dark Mode**: Switch between themes for the viewer and its controls.
+- **Embeddable**: Designed to be easily embedded in Notion or any site that supports iframes.
 
 ## How to use
 
-Pass a url to a .glb file as shown below and it'll load the glb. I haven't extensively tested it but it'll load the glb in whatever embeds where iframe is supported. I needed this for Notion. Feel free to raise an issue for features and bugs.
+You can either use the UI to upload a local file or pass a URL to a `.glb`/`.gltf` file in the query parameters. I needed this for Notion, but it will work in any embed that supports iframes. Feel free to raise an issue for features and bugs.
 
 ## URL Parameters
 
@@ -15,24 +26,28 @@ To view a 3D model and configure its display, you can append query parameters to
 
 **Parameters:**
 
-*   `modelUrl`: **(Required)** The URL to your 3D model file (GLB or GLTF format). This must be a publicly accessible URL.
+*   `modelUrl`: The URL to your 3D model file (`.glb` or `.gltf`). This must be a publicly accessible URL.
     *   **Example:** `?modelUrl=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/refs/heads/main/2.0/Duck/glTF-Binary/Duck.glb`
 
 *   `surface`: Toggles the visibility of the model's surface.
     *   **Allowed values:** `true`, `false`
+    *   **Default:** `true`
     *   **Example:** `&surface=false` (to hide the surface)
 
 *   `wireframe`: Toggles the visibility of the model's wireframe.
     *   **Allowed values:** `true`, `false`
+    *   **Default:** `false`
     *   **Example:** `&wireframe=true` (to show the wireframe)
 
 *   `color`: Sets the color of the wireframe. Use a hexadecimal color code (without the `0x` prefix).
     *   **Allowed values:** `000000` (black), `ff0000` (red), `00ff00` (green), `0000ff` (blue)
+    *   **Default:** `000000`
     *   **Example:** `&color=ff0000` (to set wireframe color to red)
 
 *   `theme`: Sets the theme of the viewer (background and menu).
     *   **Allowed values:** `light`, `dark`
-    *   **Example:** `&theme=dark` (to enable dark mode)
+    *   **Default:** `dark`
+    *   **Example:** `&theme=light` (to enable light mode)
 
 **Full URL Example:**
 
