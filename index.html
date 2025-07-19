@@ -569,7 +569,7 @@
             showLightingCheckbox.dispatchEvent(new Event('change'));
 
             const environmentParam = urlParams.get('environment');
-            showEnvironmentCheckbox.checked = environmentParam !== null ? environmentParam === 'true' : true; // Default to true
+            showEnvironmentCheckbox.checked = environmentParam !== null ? environmentParam === 'true' : false; // Default to false
             showEnvironmentCheckbox.dispatchEvent(new Event('change'));
 
             const autoRotateParam = urlParams.get('autorotate');
