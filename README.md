@@ -4,11 +4,7 @@ This is a simple 3D viewer that can be embedded in Notion as an iframe. It uses 
 
 ## How to use
 
-1.  **Create a GitHub Repository:** Create a new public repository on GitHub.
-2.  **Upload Files:** Add the `index.html` file to this repository.
-3.  **Enable GitHub Pages:** In the repository's settings, go to the "Pages" section and enable GitHub Pages for the `main` branch.
-
-Once GitHub Pages is enabled, the site will be available at `https://<your-username>.github.io/<your-repo-name>/`.
+Pass a url to a .glb file as shown below and it'll load the glb. I haven't extensively tested it but it'll load the glb in whatever embeds where iframe is supported. I needed this for Notion. Feel free to raise an issue for features and bugs.
 
 ## URL Parameters
 
@@ -40,7 +36,9 @@ To view a 3D model and configure its display, you can append query parameters to
 
 **Full URL Example:**
 
-`https://abhinay1997.github.io/Notion3DViewer/?modelUrl=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/refs/heads/main/2.0/Duck/glTF-Binary/Duck.glb&theme=dark`
+[live demo](https://abhinay1997.github.io/Notion3DViewer/?modelUrl=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/refs/heads/main/2.0/Duck/glTF-Binary/Duck.glb&theme=dark)
+
+Sample duck.glb credits to KhronosGroup! Thanks team!
 
 ## Embedding in Notion
 
