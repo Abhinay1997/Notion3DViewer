@@ -134,50 +134,34 @@
             border-color: var(--selected-border-color);
             box-shadow: 0 0 0 2px var(--selected-shadow-color);
         }
-        .theme-switch-wrapper {
-            display: flex;
-            align-items: center;
-        }
-        .theme-switch {
-            display: inline-block;
-            height: 22px;
-            position: relative;
-            width: 40px;
-        }
-        .theme-switch input {
-            display:none;
-        }
-        .slider {
-            background-color: #ccc;
-            bottom: 0;
+        #theme-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
             cursor: pointer;
-            left: 0;
+            width: 24px;
+            height: 24px;
+            color: var(--text-color);
+        }
+        #theme-toggle .sun, #theme-toggle .moon {
             position: absolute;
-            right: 0;
-            top: 0;
-            transition: .4s;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
-        .slider:before {
-            background-color: #fff;
-            bottom: 3px;
-            content: "";
-            height: 16px;
-            left: 3px;
-            position: absolute;
-            transition: .4s;
-            width: 16px;
+        #theme-toggle .sun {
+            opacity: 0;
+            transform: translateY(10px);
         }
-        input:checked + .slider {
-            background-color: #555;
+        #theme-toggle .moon {
+            opacity: 1;
+            transform: translateY(0);
         }
-        input:checked + .slider:before {
-            transform: translateX(18px);
+        body.dark-mode #theme-toggle .sun {
+            opacity: 1;
+            transform: translateY(0);
         }
-        .slider.round {
-            border-radius: 34px;
-        }
-        .slider.round:before {
-            border-radius: 50%;
+        body.dark-mode #theme-toggle .moon {
+            opacity: 0;
+            transform: translateY(-10px);
         }
     </style>
 </head>
@@ -185,6 +169,18 @@
     <div id="title"></div>
     <div id="loading-indicator"></div>
     <div id="error-message"></div>
+    <div id="upload-ui" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--menu-bg-color); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); text-align: center; color: var(--text-color); backdrop-filter: blur(10px);">
+        <h2 style="margin-top: 0; font-weight: 250;">Load 3D Model</h2>
+        <p style="font-size: 14px; font-weight: 250;">Select a GLB/GLTF file or paste a URL.</p>
+        <input type="file" id="file-input" accept=".glb,.gltf" style="margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">
+        <p style="font-size: 12px; font-weight: 250;">or</p>
+        <input type="text" id="url-input" placeholder="Paste model URL" style="width: 80%; margin-bottom: 10px; padding: 5px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--checkbox-bg); color: var(--text-color);">
+        <button id="load-button" style="padding: 8px 16px; border-radius: 8px; border: none; background-color: var(--text-color); color: var(--bg-color); cursor: pointer;">Load</button>
+    </div>
+    <div id="theme-toggle">
+        <svg class="sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg class="moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </div>
     <div id="menu">
         <div id="menu-toggle">Controls</div>
         <div id="menu-content">
@@ -203,15 +199,6 @@
                     <div class="color-box" data-color="0xff0000" style="background-color: #ff0000"></div>
                     <div class="color-box" data-color="0x00ff00" style="background-color: #00ff00"></div>
                     <div class="color-box" data-color="0x0000ff" style="background-color: #0000ff"></div>
-                </div>
-            </div>
-            <div class="menu-item">
-                <label for="theme-switch">Theme:</label>
-                <div class="theme-switch-wrapper">
-                    <label class="theme-switch">
-                        <input type="checkbox" id="theme-switch">
-                        <span class="slider round"></span>
-                    </label>
                 </div>
             </div>
         </div>
@@ -237,13 +224,21 @@
 
         const wireframeHelpers = [];
         const originalMaterials = new Map();
-
+        let currentModel = null;
         const loader = new GLTFLoader();
-        const urlParams = new URLSearchParams(window.location.search);
-        const modelUrl = urlParams.get('modelUrl');
 
-        if (modelUrl) {
-            loader.load(modelUrl, (gltf) => {
+        function loadModel(url) {
+            if (currentModel) {
+                scene.remove(currentModel);
+                wireframeHelpers.length = 0;
+                originalMaterials.clear();
+            }
+
+            document.getElementById('upload-ui').style.display = 'none';
+            document.getElementById('menu').style.display = 'block';
+
+            loader.load(url, (gltf) => {
+                currentModel = gltf.scene;
                 scene.add(gltf.scene);
                 const box = new THREE.Box3().setFromObject(gltf.scene);
                 const center = box.getCenter(new THREE.Vector3());
@@ -266,16 +261,45 @@
                         wireframeHelpers.push(wireframe);
                     }
                 });
+                applyQueryParams();
             }, undefined, (error) => {
                 console.error('An error happened', error);
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.textContent = 'Failed to load model. Check console for details.';
+                errorMessage.style.display = 'block';
+                document.getElementById('upload-ui').style.display = 'block';
+                document.getElementById('menu').style.display = 'none';
             });
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const modelUrl = urlParams.get('modelUrl');
+
+        if (modelUrl) {
+            loadModel(modelUrl);
         } else {
-            const geometry = new THREE.BoxGeometry();
-            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.5 });
-            const cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
+            document.getElementById('upload-ui').style.display = 'block';
+            document.getElementById('menu').style.display = 'none';
             camera.position.z = 5;
         }
+
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    loadModel(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('load-button').addEventListener('click', function() {
+            const url = document.getElementById('url-input').value;
+            if (url) {
+                loadModel(url);
+            }
+        });
 
         function animate() {
             requestAnimationFrame(animate);
@@ -296,18 +320,15 @@
             menu.classList.toggle('open');
         });
 
-        // Stop events inside the menu from closing it
         menu.addEventListener('mousedown', (e) => e.stopPropagation());
         menu.addEventListener('touchstart', (e) => e.stopPropagation());
 
-        // Function to close the menu
         const closeMenu = () => {
             if (menu.classList.contains('open')) {
                 menu.classList.remove('open');
             }
         };
 
-        // Close the menu if a mousedown or touchstart event happens anywhere else
         window.addEventListener('mousedown', closeMenu);
         window.addEventListener('touchstart', closeMenu);
 
@@ -340,11 +361,17 @@
             });
         });
 
-        const themeSwitch = document.getElementById('theme-switch');
-        themeSwitch.addEventListener('change', function() {
-            document.body.classList.toggle('dark-mode', this.checked);
-            const clearColor = this.checked ? 0x000000 : 0xf0f0f0;
+        const themeToggle = document.getElementById('theme-toggle');
+        function setTheme(isDark) {
+            document.body.classList.toggle('dark-mode', isDark);
+            const clearColor = isDark ? 0x000000 : 0xf0f0f0;
             renderer.setClearColor(clearColor, 1);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark-mode');
+            setTheme(!isDark);
         });
 
         function applyQueryParams() {
@@ -374,47 +401,14 @@
             }
 
             const themeParam = urlParams.get('theme');
+            const savedTheme = localStorage.getItem('theme');
             if (themeParam) {
-                themeSwitch.checked = themeParam === 'dark';
-                themeSwitch.dispatchEvent(new Event('change'));
+                setTheme(themeParam === 'dark');
+            } else if (savedTheme) {
+                setTheme(savedTheme === 'dark');
             }
         }
 
-        if (modelUrl) {
-            loader.load(modelUrl, (gltf) => {
-                scene.add(gltf.scene);
-                const box = new THREE.Box3().setFromObject(gltf.scene);
-                const center = box.getCenter(new THREE.Vector3());
-                gltf.scene.position.sub(center);
-                const size = box.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const fov = camera.fov * (Math.PI / 180);
-                let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-                cameraZ *= 1.5;
-                camera.position.set(0, 0, cameraZ);
-                controls.update();
-
-                gltf.scene.traverse((child) => {
-                    if (child.isMesh) {
-                        originalMaterials.set(child, child.material);
-                        const edges = new THREE.EdgesGeometry(child.geometry);
-                        const wireframe = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000 }));
-                        wireframe.visible = false;
-                        child.add(wireframe);
-                        wireframeHelpers.push(wireframe);
-                    }
-                });
-                applyQueryParams();
-            }, undefined, (error) => {
-                console.error('An error happened', error);
-            });
-        } else {
-            const geometry = new THREE.BoxGeometry();
-            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, metalness: 0.5, roughness: 0.5 });
-            const cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
-            camera.position.z = 5;
-        }
         applyQueryParams();
 
     </script>
