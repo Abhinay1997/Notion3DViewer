@@ -15,7 +15,7 @@
             --selected-shadow-color: #333;
         }
         body.dark-mode {
-            --bg-color: #2c2c2c;
+            --bg-color: #000000;
             --menu-bg-color: rgba(44, 44, 44, 0.8);
             --text-color: #f0f0f0;
             --border-color: #f0f0f0;
@@ -50,7 +50,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-weight: 500;
+            font-weight: 250;
+            font-size: 16px;
         }
         #menu-toggle::after {
             content: '▶';
@@ -82,6 +83,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 12px;
+            font-weight: 250;
         }
         input[type="checkbox"] {
             -webkit-appearance: none;
@@ -89,7 +92,6 @@
             background-color: var(--checkbox-bg);
             margin: 0;
             font: inherit;
-            color: var(--border-color);
             width: 1.15em;
             height: 1.15em;
             border: 0.15em solid currentColor;
@@ -118,10 +120,10 @@
             align-items: center;
         }
         .color-box {
-            width: 24px;
-            height: 24px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 16px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             border: 2px solid transparent;
         }
@@ -323,7 +325,7 @@
         const themeSwitch = document.getElementById('theme-switch');
         themeSwitch.addEventListener('change', function() {
             document.body.classList.toggle('dark-mode', this.checked);
-            const clearColor = this.checked ? 0x2c2c2c : 0xf0f0f0;
+            const clearColor = this.checked ? 0x000000 : 0xf0f0f0;
             renderer.setClearColor(clearColor, 1);
         });
 
