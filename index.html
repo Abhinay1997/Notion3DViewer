@@ -18,7 +18,7 @@
         body.dark-mode {
             --bg-color: #000000;
             --menu-bg-color: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-            --text-color: #999;
+            --text-color: #fff;
             --border-color: rgba(255, 255, 255, 0.2);
             --shadow-color: rgba(0, 0, 0, 0.2);
             --checkbox-bg: #555;
@@ -254,11 +254,15 @@
         scene.add(directionalLight);
 
         let environmentTexture = null;
+        let modelLoaded = false;
+        let envMapLoaded = false;
+
         new RGBELoader()
             .load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/royal_esplanade_1k.hdr', (texture) => {
                 environmentTexture = texture;
                 environmentTexture.mapping = THREE.EquirectangularReflectionMapping;
-                applyQueryParams(); // Re-apply params after env map loads
+                envMapLoaded = true;
+                applyControlDefaults();
             });
 
         const wireframeHelpers = [];
@@ -277,6 +281,8 @@
                 }
                 window.objectURLs = [];
             }
+            
+            modelLoaded = false;
 
             document.getElementById('upload-ui').style.display = 'none';
             document.getElementById('menu').style.display = 'block';
@@ -399,7 +405,8 @@
                         wireframeHelpers.push(wireframe);
                     }
                 });
-                applyQueryParams();
+                modelLoaded = true;
+                applyControlDefaults();
             }, undefined, (error) => {
                 console.error('An error happened during GLTF loading:', error);
                 const errorMessage = document.getElementById('error-message');
@@ -485,14 +492,17 @@
             }
         });
 
-        
-
         const showSurfaceCheckbox = document.getElementById('show-surface');
         showSurfaceCheckbox.addEventListener('change', (event) => {
             const isVisible = event.target.checked;
             for (const [mesh, material] of originalMaterials.entries()) {
                 mesh.material.visible = isVisible;
             }
+        });
+
+        const showLightingCheckbox = document.getElementById('show-lighting');
+        showLightingCheckbox.addEventListener('change', (event) => {
+            directionalLight.visible = event.target.checked;
         });
 
         const showEnvironmentCheckbox = document.getElementById('show-environment');
@@ -526,56 +536,52 @@
             setTheme(!isDark);
         });
 
-        function applyQueryParams() {
+        function applyControlDefaults() {
+            if (!modelLoaded || !envMapLoaded) return;
+
+            console.log("Applying control defaults and URL parameters.");
+
+            // Set initial states based on URL or defaults, then dispatch change events
             const surfaceParam = urlParams.get('surface');
-            if (surfaceParam !== null) {
-                showSurfaceCheckbox.checked = surfaceParam === 'true';
-                showSurfaceCheckbox.dispatchEvent(new Event('change'));
-            }
+            showSurfaceCheckbox.checked = surfaceParam !== null ? surfaceParam === 'true' : true; // Default to true
+            showSurfaceCheckbox.dispatchEvent(new Event('change'));
 
             const wireframeParam = urlParams.get('wireframe');
-            if (wireframeParam !== null) {
-                showWireframeCheckbox.checked = wireframeParam === 'true';
-                showWireframeCheckbox.dispatchEvent(new Event('change'));
-            }
+            showWireframeCheckbox.checked = wireframeParam !== null ? wireframeParam === 'true' : false; // Default to false
+            showWireframeCheckbox.dispatchEvent(new Event('change'));
 
             const lightingParam = urlParams.get('lighting');
-            if (lightingParam !== null) {
-                showLightingCheckbox.checked = lightingParam === 'true';
-                showLightingCheckbox.dispatchEvent(new Event('change'));
-            }
+            showLightingCheckbox.checked = lightingParam !== null ? lightingParam === 'true' : true; // Default to true
+            showLightingCheckbox.dispatchEvent(new Event('change'));
 
             const environmentParam = urlParams.get('environment');
-            if (environmentParam !== null) {
-                showEnvironmentCheckbox.checked = environmentParam === 'true';
-                showEnvironmentCheckbox.dispatchEvent(new Event('change'));
-            }
+            showEnvironmentCheckbox.checked = environmentParam !== null ? environmentParam === 'true' : true; // Default to true
+            showEnvironmentCheckbox.dispatchEvent(new Event('change'));
 
             const colorParam = urlParams.get('color');
             if (colorParam) {
-                const color = parseInt("0x" + colorParam);
                 const colorBox = document.querySelector(`.color-box[data-color="0x${colorParam}"]`);
                 if (colorBox) {
-                    colorBoxes.forEach(b => b.classList.remove('selected'));
-                    colorBox.classList.add('selected');
-                    for (const helper of wireframeHelpers) {
-                        helper.material.color.setHex(color);
-                    }
+                    colorBox.dispatchEvent(new Event('click'));
+                } else {
+                    // If URL color is invalid, default to black
+                    document.querySelector('.color-box[data-color="0x000000"]').dispatchEvent(new Event('click'));
                 }
-            }
-
-            const themeParam = urlParams.get('theme');
-            const savedTheme = localStorage.getItem('theme');
-            if (themeParam) {
-                setTheme(themeParam === 'dark');
-            } else if (savedTheme) {
-                setTheme(savedTheme === 'dark');
             } else {
-                setTheme(true);
+                // Default to black if no color param
+                document.querySelector('.color-box[data-color="0x000000"]').dispatchEvent(new Event('click'));
             }
         }
 
-        applyQueryParams();
+        const themeParam = urlParams.get('theme');
+        const savedTheme = localStorage.getItem('theme');
+        if (themeParam) {
+            setTheme(themeParam === 'dark');
+        } else if (savedTheme) {
+            setTheme(savedTheme === 'dark');
+        } else {
+            setTheme(true);
+        }
 
     </script>
 </body>
