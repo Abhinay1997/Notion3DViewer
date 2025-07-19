@@ -156,6 +156,8 @@
         #theme-toggle .sun {
             opacity: 0;
             transform: translateY(10px);
+            stroke: orange;
+            fill: orange;
         }
         #theme-toggle .moon {
             opacity: 1;
@@ -531,10 +533,13 @@
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
         }
 
-        themeToggle.addEventListener('click', () => {
+        themeToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent menu from closing
             const isDark = document.body.classList.contains('dark-mode');
             setTheme(!isDark);
         });
+        themeToggle.addEventListener('mousedown', (e) => e.stopPropagation());
+        themeToggle.addEventListener('touchstart', (e) => e.stopPropagation());
 
         function applyControlDefaults() {
             if (!modelLoaded || !envMapLoaded) return;
