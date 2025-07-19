@@ -209,6 +209,10 @@
                 <label for="show-environment">Environment</label>
             </div>
             <div class="menu-item">
+                <input type="checkbox" id="auto-rotate">
+                <label for="auto-rotate">Auto Rotate</label>
+            </div>
+            <div class="menu-item">
                 <label>Color:</label>
                 <div id="color-picker">
                     <div class="color-box selected" data-color="0x000000" style="background-color: #000000"></div>
@@ -514,6 +518,11 @@
             scene.environment = show ? environmentTexture : null;
         });
 
+        const autoRotateCheckbox = document.getElementById('auto-rotate');
+        autoRotateCheckbox.addEventListener('change', (event) => {
+            controls.autoRotate = event.target.checked;
+        });
+
         const colorBoxes = document.querySelectorAll('.color-box');
         colorBoxes.forEach(box => {
             box.addEventListener('click', (event) => {
@@ -562,6 +571,10 @@
             const environmentParam = urlParams.get('environment');
             showEnvironmentCheckbox.checked = environmentParam !== null ? environmentParam === 'true' : true; // Default to true
             showEnvironmentCheckbox.dispatchEvent(new Event('change'));
+
+            const autoRotateParam = urlParams.get('autorotate');
+            autoRotateCheckbox.checked = autoRotateParam !== null ? autoRotateParam === 'true' : false; // Default to false
+            autoRotateCheckbox.dispatchEvent(new Event('change'));
 
             const colorParam = urlParams.get('color');
             if (colorParam) {
