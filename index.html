@@ -289,13 +289,16 @@
 
         const menu = document.getElementById('menu');
         const menuToggle = document.getElementById('menu-toggle');
-        menuToggle.addEventListener('click', (event) => {
-            event.stopPropagation();
+        menuToggle.addEventListener('click', () => {
             menu.classList.toggle('open');
         });
 
-        window.addEventListener('click', (event) => {
-            if (menu.classList.contains('open') && !menu.contains(event.target)) {
+        // Stop mousedown events inside the menu from closing it
+        menu.addEventListener('mousedown', (e) => e.stopPropagation());
+
+        // Close the menu if a mousedown event happens anywhere else
+        window.addEventListener('mousedown', () => {
+            if (menu.classList.contains('open')) {
                 menu.classList.remove('open');
             }
         });
