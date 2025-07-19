@@ -5,11 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notion 3D Viewer</title>
     <style>
-        body { margin: 0; }
+        body { 
+            margin: 0;
+            font-family: monospace, sans-serif;
+            font-size: small;
+        }
         canvas { display: block; }
+        #menu {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #202020;
+            color: #888;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        #menu-toggle {
+            cursor: pointer;
+            padding: 5px;
+        }
+        #menu-content {
+            display: none;
+            margin-top: 10px;
+        }
+        input[type="checkbox"] {
+            accent-color: #000;
+        }
+        #color-picker {
+            display: flex;
+            margin-top: 10px;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            cursor: pointer;
+            border: 1px solid #555;
+        }
     </style>
 </head>
 <body>
+    <div id="menu">
+        <div id="menu-toggle">Menu</div>
+        <div id="menu-content" style="display: none;">
+            <div>
+                <input type="checkbox" id="show-vertices"> <label for="show-vertices">Show Vertices</label>
+            </div>
+            <div>
+                <input type="checkbox" id="show-surface" checked> <label for="show-surface">Show Surface</label>
+            </div>
+            <div id="color-picker">
+                <div class="color-box" data-color="0x000000" style="background-color: #000000"></div>
+                <div class="color-box" data-color="0xff0000" style="background-color: #ff0000"></div>
+                <div class="color-box" data-color="0x00ff00" style="background-color: #00ff00"></div>
+                <div class="color-box" data-color="0x0000ff" style="background-color: #0000ff"></div>
+            </div>
+        </div>
+    </div>
     <script type="module">
         import * as THREE from 'https://cdn.skypack.dev/three@0.132.2';
         import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/loaders/GLTFLoader.js';
@@ -17,7 +70,7 @@
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
@@ -27,6 +80,9 @@
         light.position.set(1, 1, 1).normalize();
         scene.add(light);
         scene.add(new THREE.AmbientLight(0x404040));
+
+        const wireframeHelpers = [];
+        const originalMaterials = new Map();
 
         const loader = new GLTFLoader();
         const urlParams = new URLSearchParams(window.location.search);
@@ -45,6 +101,18 @@
                 cameraZ *= 1.5; // zoom out a bit
                 camera.position.z = cameraZ;
                 controls.update();
+
+                gltf.scene.traverse((child) => {
+                    if (child.isMesh) {
+                        originalMaterials.set(child, child.material);
+                        const edges = new THREE.EdgesGeometry(child.geometry);
+                        const wireframe = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000 }));
+                        wireframe.visible = false;
+                        child.add(wireframe);
+                        wireframeHelpers.push(wireframe);
+                    }
+                });
+
             }, undefined, (error) => {
                 console.error(error);
             });
@@ -59,6 +127,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
+            controls.update();
             renderer.render(scene, camera);
         }
         animate();
@@ -68,6 +137,42 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }, false);
+
+        const menuToggle = document.getElementById('menu-toggle');
+        const menuContent = document.getElementById('menu-content');
+        menuToggle.addEventListener('click', () => {
+            menuContent.style.display = menuContent.style.display === 'none' ? 'block' : 'none';
+        });
+
+        const showVerticesCheckbox = document.getElementById('show-vertices');
+        showVerticesCheckbox.addEventListener('change', (event) => {
+            const isVisible = event.target.checked;
+            for (const helper of wireframeHelpers) {
+                helper.visible = isVisible;
+            }
+        });
+
+        const showSurfaceCheckbox = document.getElementById('show-surface');
+        showSurfaceCheckbox.addEventListener('change', (event) => {
+            const isVisible = event.target.checked;
+            for (const [mesh, material] of originalMaterials.entries()) {
+                if (isVisible) {
+                    mesh.material = material;
+                } else {
+                    mesh.material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
+                }
+            }
+        });
+
+        const colorBoxes = document.querySelectorAll('.color-box');
+        colorBoxes.forEach(box => {
+            box.addEventListener('click', (event) => {
+                const color = parseInt(event.target.dataset.color, 16);
+                for (const helper of wireframeHelpers) {
+                    helper.material.color.setHex(color);
+                }
+            });
+        });
 
     </script>
 </body>
