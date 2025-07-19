@@ -38,8 +38,10 @@ To view a 3D model and configure its display, you can append query parameters to
 
 [live demo](https://abhinay1997.github.io/Notion3DViewer/?modelUrl=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/refs/heads/main/2.0/Duck/glTF-Binary/Duck.glb&theme=dark)
 
+![full screen](https://github.com/Abhinay1997/Notion3DViewer/blob/main/assets/full.png?raw=true)
 Sample duck.glb credits to KhronosGroup! Thanks team!
 
 ## Embedding in Notion
 
-To embed the viewer in Notion, simply paste the constructed URL (including your `modelUrl` and any other desired parameters) into a Notion page and select "Embed".
+To embed the viewer in Notion, simply paste the constructed URL (including your `modelUrl` and any other desired parameters) into a Notion page and select "Embed". Here's how it looks on Notion:
+![notion](https://github.com/Abhinay1997/Notion3DViewer/blob/main/assets/notion_iframe.png?raw=true)
