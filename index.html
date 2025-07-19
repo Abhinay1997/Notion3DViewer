@@ -182,6 +182,9 @@
     </style>
 </head>
 <body>
+    <div id="title"></div>
+    <div id="loading-indicator"></div>
+    <div id="error-message"></div>
     <div id="menu">
         <div id="menu-toggle">Controls</div>
         <div id="menu-content">
@@ -293,15 +296,20 @@
             menu.classList.toggle('open');
         });
 
-        // Stop mousedown events inside the menu from closing it
+        // Stop events inside the menu from closing it
         menu.addEventListener('mousedown', (e) => e.stopPropagation());
+        menu.addEventListener('touchstart', (e) => e.stopPropagation());
 
-        // Close the menu if a mousedown event happens anywhere else
-        window.addEventListener('mousedown', () => {
+        // Function to close the menu
+        const closeMenu = () => {
             if (menu.classList.contains('open')) {
                 menu.classList.remove('open');
             }
-        });
+        };
+
+        // Close the menu if a mousedown or touchstart event happens anywhere else
+        window.addEventListener('mousedown', closeMenu);
+        window.addEventListener('touchstart', closeMenu);
 
         const showVerticesCheckbox = document.getElementById('show-vertices');
         showVerticesCheckbox.addEventListener('change', (event) => {
