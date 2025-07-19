@@ -20,7 +20,7 @@ To view a 3D model and configure its display, you can append query parameters to
 **Parameters:**
 
 *   `modelUrl`: **(Required)** The URL to your 3D model file (GLB or GLTF format). This must be a publicly accessible URL.
-    *   **Example:** `?modelUrl=https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/DamagedHelmet/glTF-Binary/DamagedHelmet.glb`
+    *   **Example:** `?modelUrl=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/refs/heads/main/2.0/Duck/glTF-Binary/Duck.glb`
 
 *   `surface`: Toggles the visibility of the model's surface.
     *   **Allowed values:** `true`, `false`
@@ -40,7 +40,7 @@ To view a 3D model and configure its display, you can append query parameters to
 
 **Full URL Example:**
 
-`https://<your-username>.github.io/<your-repo-name>/?modelUrl=https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/DamagedHelmet/glTF-Binary/DamagedHelmet.glb&surface=true&wireframe=true&color=00ff00&theme=dark`
+`https://abhinay1997.github.io/Notion3DViewer/?modelUrl=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/refs/heads/main/2.0/Duck/glTF-Binary/Duck.glb&theme=dark`
 
 ## Embedding in Notion
 
